@@ -1,6 +1,10 @@
 {
   "extends": "expo/tsconfig.base",
+
   "compilerOptions": {
-    "strict": true
-  }
+    "types": ["jest", "node"],
+    "skipLibCheck": true,
+    "jsx": "react"
+  },
+  "exclude": ["node_modules"]
 }
