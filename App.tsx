@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -12,6 +12,7 @@ import {
 import axios from "axios";
 import { Picker } from "@react-native-picker/picker";
 import * as Font from "expo-font";
+import Icon from "react-native-vector-icons/Feather";
 
 interface Character {
   name: string;
@@ -44,12 +45,14 @@ export default function App() {
   const [sortField, setSortField] = useState<string>("name");
   const totalPages = Math.ceil(characters.length / pageSize);
   const [fontLoaded, setFontLoaded] = useState(false);
-  const stars = generateStars(100);
+  const stars = useMemo(() => generateStars(100), []);
 
   const loadFonts = async () => {
     try {
       await Font.loadAsync({
         Title: require("./assets/fonts/title.ttf"),
+        Other: require("./assets/fonts/sss.ttf"),
+        Details: require("./assets/fonts/details.ttf"),
       });
       console.log("Font loaded successfully");
       setFontLoaded(true);
@@ -155,19 +158,24 @@ export default function App() {
 
       <View style={styles.pickerContainer}>
         <Text style={styles.pickerLabel}>Page size:</Text>
-        <Picker
-          selectedValue={pageSize}
-          style={styles.picker}
-          onValueChange={(itemValue) => {
-            setPageSize(itemValue);
-            setCurrentPage(1);
-          }}
-        >
-          <Picker.Item label="25" value={25} />
-          <Picker.Item label="50" value={50} />
-          <Picker.Item label="100" value={100} />
-          <Picker.Item label="150" value={150} />
-        </Picker>
+        <View style={styles.pickerWrapper}>
+          <Picker
+            selectedValue={pageSize}
+            style={styles.picker}
+            onValueChange={(itemValue) => setPageSize(itemValue)}
+          >
+            <Picker.Item label="25" value={25} />
+            <Picker.Item label="50" value={50} />
+            <Picker.Item label="100" value={100} />
+            <Picker.Item label="150" value={150} />
+          </Picker>
+          <Icon
+            name="chevron-down"
+            size={24}
+            color="#fff"
+            style={styles.icon}
+          />
+        </View>
       </View>
 
       {loading ? (
@@ -252,24 +260,30 @@ const styles = StyleSheet.create({
   },
   input: {
     height: 50,
-    borderColor: "#ccc",
+    borderColor: "#ffe81f",
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 15,
     marginBottom: 10,
-    backgroundColor: "#fff",
+    color: "#ffff",
+    backgroundColor: "rgba(0,0,0,0.08727240896358546) 49%)",
+    fontFamily: "Details",
   },
   searchButton: {
-    backgroundColor: "#007bff",
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: "yellow",
+    borderStyle: "solid",
     paddingVertical: 15,
     borderRadius: 8,
     marginBottom: 20,
   },
+
   searchButtonText: {
-    color: "#fff",
+    color: "#ffe81f",
     textAlign: "center",
-    fontWeight: "bold",
     fontSize: 16,
+    fontFamily: "Other",
   },
   pickerContainer: {
     flexDirection: "row",
@@ -281,9 +295,27 @@ const styles = StyleSheet.create({
     marginRight: 10,
     color: "#fff",
   },
+  pickerWrapper: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "transparent",
+    borderColor: "#fff",
+    borderWidth: 1,
+    borderRadius: 8,
+    height: 35,
+    width: 120,
+    paddingHorizontal: 5,
+  },
   picker: {
     flex: 1,
-    height: 50,
+    height: 40,
+    color: "#fff",
+    backgroundColor: "transparent",
+    width: "100%",
+  },
+  icon: {
+    marginRight: 10,
   },
   tableHeader: {
     flexDirection: "row",
@@ -295,7 +327,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 10,
   },
   headerCell: {
-    fontWeight: "bold",
+    fontFamily: "Details",
     fontSize: 16,
     textAlign: "center",
     color: "#555",
@@ -319,7 +351,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    fontWeight: "bold",
+    fontFamily: "Details",
     color: "#333",
   },
   subtitle: {
@@ -350,6 +382,6 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#fff",
     fontSize: 16,
-    fontWeight: "bold",
+    fontFamily: "Details",
   },
 });
