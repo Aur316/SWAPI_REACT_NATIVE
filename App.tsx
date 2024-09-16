@@ -1,15 +1,17 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
   Text,
   View,
   TextInput,
   FlatList,
-  ActivityIndicator,
   TouchableOpacity,
+  Dimensions,
+  ActivityIndicator,
 } from "react-native";
 import axios from "axios";
 import { Picker } from "@react-native-picker/picker";
+import * as Font from "expo-font";
 
 interface Character {
   name: string;
@@ -18,6 +20,21 @@ interface Character {
   created: string;
 }
 
+const { width, height } = Dimensions.get("window");
+
+const generateStars = (count: number) => {
+  const stars = [];
+  for (let i = 0; i < count; i++) {
+    const starSize = Math.random() * 2 + 1;
+    stars.push({
+      top: Math.random() * height,
+      left: Math.random() * width,
+      size: starSize,
+    });
+  }
+  return stars;
+};
+
 export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [characters, setCharacters] = useState<Character[]>([]);
@@ -25,8 +42,29 @@ export default function App() {
   const [pageSize, setPageSize] = useState<number>(25);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [sortField, setSortField] = useState<string>("name");
-
   const totalPages = Math.ceil(characters.length / pageSize);
+  const [fontLoaded, setFontLoaded] = useState(false);
+  const stars = generateStars(100);
+
+  const loadFonts = async () => {
+    try {
+      await Font.loadAsync({
+        Title: require("./assets/fonts/title.ttf"),
+      });
+      console.log("Font loaded successfully");
+      setFontLoaded(true);
+    } catch (error) {
+      console.log("Error loading font:", error);
+    }
+  };
+
+  useEffect(() => {
+    loadFonts();
+  }, []);
+
+  if (!fontLoaded) {
+    return <ActivityIndicator size="large" color="#0000ff" />;
+  }
 
   const searchCharacters = async () => {
     setLoading(true);
@@ -42,16 +80,7 @@ export default function App() {
         allCharacters = [...allCharacters, ...results];
         apiURL = response.data.next;
       }
-      // Fetch version
-      /*
-    while (apiURL) {
-      const response = await fetch(apiURL);
-      const data = await response.json();
-      let results = data.results as Character[];
-      allCharacters = [...allCharacters, ...results];
-      apiURL = data.next;
-    }
-    */
+
       const blueEyedCharacters = allCharacters
         .filter((char) => char.eye_color.includes("blue"))
         .sort((a, b) => a.name.localeCompare(b.name));
@@ -95,6 +124,23 @@ export default function App() {
 
   return (
     <View style={styles.container}>
+      <View style={styles.starryBackground}>
+        {stars.map((star, index) => (
+          <View
+            key={index}
+            style={{
+              position: "absolute",
+              top: star.top,
+              left: star.left,
+              width: star.size,
+              height: star.size,
+              backgroundColor: "#fff",
+              borderRadius: star.size / 2,
+            }}
+          />
+        ))}
+      </View>
+
       <Text style={styles.header}>Star Wars Characters Search</Text>
       <TextInput
         style={styles.input}
@@ -133,11 +179,6 @@ export default function App() {
             keyExtractor={(item) => item.name}
             renderItem={renderItem}
             initialNumToRender={10}
-            getItemLayout={(data, index) => ({
-              length: 70,
-              offset: 70 * index,
-              index,
-            })}
             ListHeaderComponent={
               <View style={styles.tableHeader}>
                 <TouchableOpacity onPress={() => sortBy("name")}>
@@ -192,14 +233,22 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: 40,
     paddingHorizontal: 20,
-    backgroundColor: "#f9f9f9",
+    backgroundColor: "#000",
+  },
+  starryBackground: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    zIndex: -1,
   },
   header: {
-    fontSize: 26,
-    fontWeight: "bold",
+    fontSize: 24,
     marginBottom: 20,
-    color: "#333",
+    color: "#ffe81f",
     textAlign: "center",
+    fontFamily: "Title",
   },
   input: {
     height: 50,
@@ -230,6 +279,7 @@ const styles = StyleSheet.create({
   pickerLabel: {
     fontSize: 16,
     marginRight: 10,
+    color: "#fff",
   },
   picker: {
     flex: 1,
@@ -284,6 +334,7 @@ const styles = StyleSheet.create({
   },
   paginationText: {
     fontSize: 16,
+    color: "#fff",
   },
   button: {
     backgroundColor: "#007bff",
