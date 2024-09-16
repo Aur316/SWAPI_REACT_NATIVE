@@ -9,17 +9,40 @@ Other characters are listed next, sorted by creation date.
 Pagination: Choose how many characters to display per page (25, 50, 100, 150).
 Testing: Basic unit tests ensure search functionality works properly.
 Installation
-Clone the repository: Run the command: git clone <repo-url> to clone the repository to your local machine. Navigate to the project folder using cd StarWarsCharacters.
+Clone the repository:
+Run the following command to clone the repository to your local machine:
 
-Install the necessary dependencies: Run the command: npm install to install all the required packages.
+bash
+Kód másolása
+git clone <repo-url>
+Navigate to the project folder:
 
-Start the app: Run the command: npx expo start to start the app with Expo. You can then open it in a web browser or use an emulator.
+bash
+Kód másolása
+cd StarWarsCharacters
+Install the necessary dependencies:
+Run the following command to install all required packages:
+
+Kód másolása
+npm install
+Start the app:
+Run the following command to start the app with Expo:
+
+sql
+Kód másolása
+npx expo start
+You can then open it in a web browser or use an emulator.
 
 Testing
-To run the unit tests: Run the command: npm test to execute the tests and verify the search functionality.
+To run the unit tests, execute the following command:
+
+bash
+Kód másolása
+npm test
+This will run all the tests and ensure the search functionality works as expected.
 
 Technologies
-React Native for building the app.
-TypeScript for type safety.
-Axios for making API requests to SWAPI.
-Jest and @testing-library/react-native for unit testing.
+React Native: For building the app.
+TypeScript: Ensures type safety.
+Axios: For making API requests to SWAPI.
+Jest and @testing-library/react-native: For unit testing.
