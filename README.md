@@ -16,4 +16,9 @@ This React Native app allows users to search for Star Wars characters by name us
 1. **Clone the repository**:  
    Run the following command to clone the repository to your local machine:
    ```bash
-   git clone <repo-url>
+   git clone <[repo-url](https://github.com/Aur316/SWAPI_REACT_NATIVE.git)>
+   ```
+Navigate to the project folder:
+ ```bash
+   cd StarWarsCharacters
+```
