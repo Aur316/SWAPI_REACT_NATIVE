@@ -13,7 +13,7 @@ Clone the repository: Run the command: git clone <repo-url> to clone the reposit
 
 Install the necessary dependencies: Run the command: npm install to install all the required packages.
 
-Start the app: Run the command: expo start to start the app with Expo. You can then open it in a web browser or use an emulator.
+Start the app: Run the command: npx expo start to start the app with Expo. You can then open it in a web browser or use an emulator.
 
 Testing
 To run the unit tests: Run the command: npm test to execute the tests and verify the search functionality.
