@@ -1,28 +1,22 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   StyleSheet,
   Text,
   View,
   TextInput,
-  FlatList,
   TouchableOpacity,
-  Dimensions,
   ActivityIndicator,
+  Dimensions,
 } from "react-native";
-import axios from "axios";
+import CharacterList from "./components/CharacterList";
+import Pagination from "./components/Pagination";
+import { useCharacters } from "./api/useCharacters";
 import { Picker } from "@react-native-picker/picker";
-import * as Font from "expo-font";
 import Icon from "react-native-vector-icons/Feather";
-
-interface Character {
-  name: string;
-  birth_year: string;
-  eye_color: string;
-  created: string;
-}
+import { Character } from "./types/types";
+import { FontProvider, useFont } from "./context/FontContext";
 
 const { width, height } = Dimensions.get("window");
-
 const generateStars = (count: number) => {
   const stars = [];
   for (let i = 0; i < count; i++) {
@@ -35,95 +29,50 @@ const generateStars = (count: number) => {
   }
   return stars;
 };
-
-export default function App() {
+const App = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [characters, setCharacters] = useState<Character[]>([]);
-  const [loading, setLoading] = useState(false);
   const [pageSize, setPageSize] = useState<number>(25);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [sortField, setSortField] = useState<string>("name");
-  const totalPages = Math.ceil(characters.length / pageSize);
-  const [fontLoaded, setFontLoaded] = useState(false);
+  const { characters, loading, error, totalPages, searchCharacters } =
+    useCharacters();
+  const { fontsLoaded } = useFont();
   const stars = useMemo(() => generateStars(100), []);
 
-  const loadFonts = async () => {
-    try {
-      await Font.loadAsync({
-        Title: require("./assets/fonts/title.ttf"),
-        Other: require("./assets/fonts/sss.ttf"),
-        Details: require("./assets/fonts/details.ttf"),
-      });
-      console.log("Font loaded successfully");
-      setFontLoaded(true);
-    } catch (error) {
-      console.log("Error loading font:", error);
-    }
-  };
+  const search = useCallback(() => {
+    searchCharacters(searchQuery, currentPage, pageSize);
+  }, [searchQuery, currentPage, pageSize, searchCharacters]);
 
-  useEffect(() => {
-    loadFonts();
-  }, []);
+  const pageSizeChange = useCallback(
+    (itemValue) => {
+      setPageSize(itemValue);
+      setCurrentPage(1);
+      searchCharacters(searchQuery, 1, itemValue);
+    },
+    [searchQuery, searchCharacters]
+  );
 
-  if (!fontLoaded) {
+  const pageChange = useCallback(
+    (page) => {
+      setCurrentPage(page);
+      searchCharacters(searchQuery, page, pageSize);
+    },
+    [searchQuery, pageSize, searchCharacters]
+  );
+
+  const renderItem = useCallback(
+    ({ item, index }: { item: Character; index: number }) => (
+      <View style={index === 0 ? styles.firstItem : styles.item}>
+        <Text style={styles.title}>{item.name}</Text>
+        <Text style={styles.subtitle}>Birth: {item.birth_year}</Text>
+        <Text style={styles.subtitle}>Eye color: {item.eye_color}</Text>
+      </View>
+    ),
+    []
+  );
+
+  if (!fontsLoaded) {
     return <ActivityIndicator size="large" color="#0000ff" />;
   }
-
-  const searchCharacters = async () => {
-    setLoading(true);
-    let allCharacters: Character[] = [];
-    let apiURL = searchQuery
-      ? `https://swapi.dev/api/people/?search=${searchQuery}`
-      : `https://swapi.dev/api/people/`;
-
-    try {
-      while (apiURL) {
-        const response = await axios.get(apiURL);
-        let results = response.data.results as Character[];
-        allCharacters = [...allCharacters, ...results];
-        apiURL = response.data.next;
-      }
-
-      const blueEyedCharacters = allCharacters
-        .filter((char) => char.eye_color.includes("blue"))
-        .sort((a, b) => a.name.localeCompare(b.name));
-
-      const otherCharacters = allCharacters
-        .filter((char) => !char.eye_color.includes("blue"))
-        .sort(
-          (a, b) =>
-            new Date(a.created).getTime() - new Date(b.created).getTime()
-        );
-
-      setCharacters([...blueEyedCharacters, ...otherCharacters]);
-      setCurrentPage(1);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const sortBy = (field: keyof Character) => {
-    setSortField(field);
-    const sortedCharacters = [...characters].sort((a, b) =>
-      a[field].localeCompare(b[field])
-    );
-    setCharacters(sortedCharacters);
-  };
-
-  const paginatedCharacters = characters.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
-
-  const renderItem = ({ item, index }: { item: Character; index: number }) => (
-    <View style={index === 0 ? styles.firstItem : styles.item}>
-      <Text style={styles.title}>{item.name}</Text>
-      <Text style={styles.subtitle}>Birth: {item.birth_year}</Text>
-      <Text style={styles.subtitle}>Eye color: {item.eye_color}</Text>
-    </View>
-  );
 
   return (
     <View style={styles.container}>
@@ -143,7 +92,6 @@ export default function App() {
           />
         ))}
       </View>
-
       <Text style={styles.header}>Star Wars Characters Search</Text>
       <TextInput
         style={styles.input}
@@ -152,7 +100,7 @@ export default function App() {
         onChangeText={setSearchQuery}
         placeholderTextColor="#777"
       />
-      <TouchableOpacity style={styles.searchButton} onPress={searchCharacters}>
+      <TouchableOpacity style={styles.searchButton} onPress={search}>
         <Text style={styles.searchButtonText}>SEARCH</Text>
       </TouchableOpacity>
 
@@ -162,7 +110,7 @@ export default function App() {
           <Picker
             selectedValue={pageSize}
             style={styles.picker}
-            onValueChange={(itemValue) => setPageSize(itemValue)}
+            onValueChange={pageSizeChange}
           >
             <Picker.Item label="25" value={25} />
             <Picker.Item label="50" value={50} />
@@ -180,61 +128,35 @@ export default function App() {
 
       {loading ? (
         <ActivityIndicator size="large" color="#0000ff" />
+      ) : error ? (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      ) : characters.length === 0 ? (
+        <Text style={styles.noResultsText}>No characters found.</Text>
       ) : (
         <>
-          <FlatList
-            data={paginatedCharacters}
-            keyExtractor={(item) => item.name}
-            renderItem={renderItem}
-            initialNumToRender={10}
-            ListHeaderComponent={
-              <View style={styles.tableHeader}>
-                <TouchableOpacity onPress={() => sortBy("name")}>
-                  <Text style={styles.headerCell}>Name</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => sortBy("birth_year")}>
-                  <Text style={styles.headerCell}>Birth</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => sortBy("eye_color")}>
-                  <Text style={styles.headerCell}>Eye color</Text>
-                </TouchableOpacity>
-              </View>
-            }
+          <CharacterList characters={characters} renderItem={renderItem} />
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={pageChange}
           />
-          <View style={styles.pagination}>
-            <TouchableOpacity
-              style={[
-                styles.button,
-                currentPage === 1 && styles.disabledButton,
-              ]}
-              onPress={() => setCurrentPage(Math.max(currentPage - 1, 1))}
-              disabled={currentPage === 1}
-            >
-              <Text style={styles.buttonText}>Prev</Text>
-            </TouchableOpacity>
-
-            <Text style={styles.paginationText}>
-              {currentPage} / {totalPages || 1}
-            </Text>
-
-            <TouchableOpacity
-              style={[
-                styles.button,
-                currentPage === totalPages && styles.disabledButton,
-              ]}
-              onPress={() =>
-                setCurrentPage(Math.min(currentPage + 1, totalPages))
-              }
-              disabled={currentPage === totalPages || totalPages === 0}
-            >
-              <Text style={styles.buttonText}>Next</Text>
-            </TouchableOpacity>
-          </View>
         </>
       )}
     </View>
   );
-}
+};
+
+const IndexApp = () => {
+  return (
+    <FontProvider>
+      <App />
+    </FontProvider>
+  );
+};
+
+export default IndexApp;
 
 const styles = StyleSheet.create({
   container: {
@@ -383,5 +305,29 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontFamily: "Details",
+  },
+  noResultsText: {
+    color: "#fff",
+    fontSize: 18,
+    textAlign: "center",
+    marginVertical: 20,
+    fontFamily: "Details",
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  errorText: {
+    color: "red",
+    fontSize: 18,
+    textAlign: "center",
+    marginVertical: 20,
+    fontFamily: "Title",
+  },
+  retryButton: {
+    fontSize: 16,
+    color: "#007bff",
+    textDecorationLine: "underline",
   },
 });
